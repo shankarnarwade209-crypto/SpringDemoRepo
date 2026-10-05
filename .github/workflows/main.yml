@@ -8,68 +8,35 @@ on:
   workflow_dispatch:
 
 jobs:
-
   sonar:
     name: Build and SonarQube Analysis
     runs-on: ubuntu-latest
 
     steps:
-    
-      # 1. Checkout source code
+
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Setup Java 17
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
+          distribution: temurin
           java-version: '17'
-          distribution: 'temurin'
           cache: maven
 
-      # 3. Check Java
-      - name: Check Java Version
+      - name: Verify Project Structure
         run: |
-          java -version
-          mvn -version
-
-      # 4. Check project structure
-      - name: Check Project Structure
-        run: |
-          echo "Current directory:"
           pwd
-
-          echo "Project files:"
-          ls -la
-
-          echo "Searching for pom.xml:"
+          ls -R
           find . -name pom.xml
 
-      # 5. Check SonarQube secrets
-      - name: Check SonarQube Secrets
-        run: |
-          if [ -z "${{ secrets.SONAR_TOKEN }}" ]; then
-            echo "SONAR_TOKEN is EMPTY"
-            exit 1
-          else
-            echo "SONAR_TOKEN is PRESENT"
-          fi
-
-          if [ -z "${{ secrets.SONAR_HOST_URL }}" ]; then
-            echo "SONAR_HOST_URL is EMPTY"
-            exit 1
-          else
-            echo "SONAR_HOST_URL is PRESENT"
-          fi
-
-      # 6. Build and SonarQube Analysis
       - name: Build and SonarQube Analysis
+        working-directory: SpringJPA_Sh
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
         run: |
           mvn clean verify sonar:sonar \
             -DskipTests \
-            -Dsonar.host.url="$SONAR_HOST_URL" \
-            -Dsonar.token="$SONAR_TOKEN"
+            -Dsonar.host.url=${SONAR_HOST_URL} \
+            -Dsonar.token=${SONAR_TOKEN}
